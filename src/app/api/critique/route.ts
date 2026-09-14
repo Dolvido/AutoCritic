@@ -19,6 +19,7 @@ const initialize = async () => {
       console.log("Database, vector store, and meta-agent initialized successfully");
     } catch (error) {
       console.error("Failed to initialize:", error);
+      throw error;
     }
   }
 };
@@ -54,7 +55,7 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("Error processing critique:", error);
     return NextResponse.json(
-      { error: "Failed to process critique" },
+      { error: "Critique unavailable. Check the local Ollama service, models, and application logs." },
       { status: 500 }
     );
   }

@@ -185,99 +185,6 @@ const generateCritique = async (code: string, language: string, options: Critiqu
   }
 };
 
-// Fallback to mock implementation if Ollama is unavailable
-const mockLLMGeneration = async (code: string, language: string) => {
-  console.log(`Using mock LLM critique for ${language} code of length ${code.length}`);
-  
-  // Wait to simulate processing time
-  await new Promise(resolve => setTimeout(resolve, 1500));
-  
-  // Return different mock responses based on the language
-  if (language === 'javascript' || language === 'typescript') {
-    return {
-      summary: "This JavaScript code could benefit from improved error handling, better variable naming, and more modern syntax.",
-      issues: [
-        {
-          id: uuidv4(),
-          title: "Missing error handling",
-          description: "The code doesn't handle potential error cases which could lead to unexpected behavior.",
-          fixSuggestion: "try {\n  // existing code\n} catch (error) {\n  console.error('An error occurred:', error);\n  // handle the error appropriately\n}",
-          severity: "high"
-        },
-        {
-          id: uuidv4(),
-          title: "Use ES6+ features",
-          description: "The code uses older JavaScript syntax when modern alternatives are available.",
-          fixSuggestion: "// Convert to arrow function\nconst myFunction = (param) => {\n  // function body\n};\n\n// Use template literals\nconst message = `Hello, ${name}!`;",
-          severity: "medium"
-        },
-        {
-          id: uuidv4(),
-          title: "Inconsistent naming convention",
-          description: "Variable names don't follow a consistent pattern.",
-          fixSuggestion: "// Use consistent camelCase\nconst userName = 'John';\nconst userAge = 30;\nconst userProfile = { ... };",
-          severity: "low"
-        }
-      ]
-    };
-  } else if (language === 'python') {
-    return {
-      summary: "This Python code has issues with error handling, could use more Pythonic patterns, and would benefit from better documentation.",
-      issues: [
-        {
-          id: uuidv4(),
-          title: "Missing exception handling",
-          description: "The code should use try/except blocks to handle potential errors.",
-          fixSuggestion: "try:\n    # existing code\nexcept Exception as e:\n    print(f\"An error occurred: {e}\")\n    # handle the error",
-          severity: "high"
-        },
-        {
-          id: uuidv4(),
-          title: "Use list comprehension",
-          description: "The code uses a for loop to build a list when a list comprehension would be more Pythonic.",
-          fixSuggestion: "# Instead of:\nresult = []\nfor i in range(10):\n    if i % 2 == 0:\n        result.append(i * 2)\n\n# Use:\nresult = [i * 2 for i in range(10) if i % 2 == 0]",
-          severity: "medium"
-        },
-        {
-          id: uuidv4(),
-          title: "Missing docstrings",
-          description: "Functions should have docstrings to explain their purpose, parameters, and return values.",
-          fixSuggestion: "def my_function(param1, param2):\n    \"\"\"\n    Brief description of function purpose.\n    \n    Args:\n        param1: Description of parameter 1\n        param2: Description of parameter 2\n        \n    Returns:\n        Description of return value\n    \"\"\"\n    # function body",
-          severity: "low"
-        }
-      ]
-    };
-  } else {
-    // Generic response for other languages
-    return {
-      summary: "This code appears to implement a basic functionality but has several issues that could be improved.",
-      issues: [
-        {
-          id: uuidv4(),
-          title: "Lack of documentation",
-          description: "The code has little or no documentation, making it difficult to understand.",
-          fixSuggestion: "# Add descriptive comments\n# Explain what this function does\ndef my_function():\n    # Explain what this line does\n    result = complex_operation()",
-          severity: "medium"
-        },
-        {
-          id: uuidv4(),
-          title: "Hardcoded values",
-          description: "The code contains hardcoded values that should be configurable constants.",
-          fixSuggestion: "# Define constants at the top of the file\nMAX_RETRY_COUNT = 5\nDEFAULT_TIMEOUT = 30\n\n# Then use the constants\nfor i in range(MAX_RETRY_COUNT):\n    result = operation_with_timeout(DEFAULT_TIMEOUT)",
-          severity: "medium"
-        },
-        {
-          id: uuidv4(),
-          title: "Error handling",
-          description: "The code lacks proper error handling mechanisms.",
-          fixSuggestion: "try:\n    # Risky operation\n    result = risky_operation()\nexcept Exception as e:\n    # Handle the error\n    logger.error(f\"Operation failed: {e}\")\n    # Take appropriate action",
-          severity: "high"
-        }
-      ]
-    };
-  }
-};
-
 // Main function to critique code
 export async function critiqueCode(
   code: string, 
@@ -285,16 +192,8 @@ export async function critiqueCode(
   options: CritiqueOptions = {}
 ): Promise<CritiqueResult> {
   try {
-    let critiqueResponse;
-    
-    try {
-      // Try to use the real Ollama implementation first
-      critiqueResponse = await generateCritique(code, language, options);
-    } catch (ollmaError) {
-      console.warn("Failed to use Ollama for critique, falling back to mock:", ollmaError);
-      // Fall back to mock implementation
-      critiqueResponse = await mockLLMGeneration(code, language);
-    }
+    // A failed model or retrieval request is an error, not a sample critique.
+    const critiqueResponse = await generateCritique(code, language, options);
     
     // Generate a unique ID for this critique
     const id = uuidv4();
